@@ -55,11 +55,14 @@ push_image () {
 
 	docker build -t ${REPOSITORY_URI}:latest "./${APP}"
 	docker push ${REPOSITORY_URI}:latest
+
+	echo "${REPOSITORY_URI}:latest"
 }
 
 deploy_app () {
 	APP=$1
 	SERVICE_TO_CALL=$2
+	IMAGE=$3
 
 	aws cloudformation deploy \
 		--capabilities CAPABILITY_IAM \
@@ -67,7 +70,7 @@ deploy_app () {
 		--parameter-overrides \
 			EnvironmentName="${ENVIRONMENT_NAME}" \
 			ServiceName="${APP}" \
-			ImageUrl="${REPOSITORY_URI}:latest" \
+			ImageUrl="${IMAGE}" \
 			ServiceToCall="${SERVICE_TO_CALL}" \
 			ContainerPort="80" \
 		--template-file service.yml \
@@ -76,9 +79,9 @@ deploy_app () {
 
 # DEPLOY APPS
 
-push_image "app"
+$IMAGE=$(push_image "app")
 
-deploy_app app1 "app2.${DISCOVERY_DOMAIN}" &
+deploy_app app1 "app2.${DISCOVERY_DOMAIN}" "${IMAGE}" &
 app1_pid=$!
 deploy_app app2 "app1.${DISCOVERY_DOMAIN}" &
 app2_pid=$!
@@ -98,7 +101,7 @@ aws cloudformation deploy \
 	--template-file edgelb.yml \
 	--no-fail-on-empty-changeset
 
-push_image "api"
+$IMAGE=$(push_image "api")
 
 aws cloudformation deploy \
 	--capabilities CAPABILITY_IAM \
@@ -106,7 +109,7 @@ aws cloudformation deploy \
 	--parameter-overrides \
 		EnvironmentName="${ENVIRONMENT_NAME}" \
 		ServiceName="api" \
-		ImageUrl="${REPOSITORY_URI}:latest" \
+		ImageUrl="${IMAGE}" \
 		ContainerPort="8080" \
 	--template-file api.yml \
 	--no-fail-on-empty-changeset
