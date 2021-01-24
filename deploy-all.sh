@@ -39,8 +39,8 @@ aws ecr get-login-password \
 		--password-stdin "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
 push_image () {
-	APP=$1
-	REPOSITORY_STACK_NAME="${ENVIRONMENT_NAME}-${APP}-repository"
+	local APP=$1
+	local REPOSITORY_STACK_NAME="${ENVIRONMENT_NAME}-${APP}-repository"
 
 	aws cloudformation deploy \
 		--stack-name ${REPOSITORY_STACK_NAME} \
@@ -48,21 +48,23 @@ push_image () {
 		--template-file repository.yml \
 		--no-fail-on-empty-changeset
 
-	REPOSITORY_URI=$(aws cloudformation describe-stacks \
+	local REPOSITORY_URI=$(aws cloudformation describe-stacks \
 		--stack-name "${REPOSITORY_STACK_NAME}" \
 		--query "Stacks[0].Outputs[?OutputKey=='ContainerRepositoryURI'].OutputValue" \
 		--output text)
 
+	sh "./${APP}/build.sh"
+
 	docker build -t ${REPOSITORY_URI}:latest "./${APP}"
 	docker push ${REPOSITORY_URI}:latest
 
-	echo "${REPOSITORY_URI}:latest"
+	IMAGE="${REPOSITORY_URI}:latest"
 }
 
 deploy_app () {
-	APP=$1
-	SERVICE_TO_CALL=$2
-	IMAGE=$3
+	local APP=$1
+	local SERVICE_TO_CALL=$2
+	local IMAGE=$3
 
 	aws cloudformation deploy \
 		--capabilities CAPABILITY_IAM \
@@ -79,11 +81,11 @@ deploy_app () {
 
 # DEPLOY APPS
 
-$IMAGE=$(push_image "app")
+push_image "app"
 
 deploy_app app1 "app2.${DISCOVERY_DOMAIN}" "${IMAGE}" &
 app1_pid=$!
-deploy_app app2 "app1.${DISCOVERY_DOMAIN}" &
+deploy_app app2 "app1.${DISCOVERY_DOMAIN}" "${IMAGE}" &
 app2_pid=$!
 
 wait $app1_pid
@@ -101,7 +103,7 @@ aws cloudformation deploy \
 	--template-file edgelb.yml \
 	--no-fail-on-empty-changeset
 
-$IMAGE=$(push_image "api")
+push_image "api"
 
 aws cloudformation deploy \
 	--capabilities CAPABILITY_IAM \

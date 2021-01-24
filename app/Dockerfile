@@ -1,9 +1,6 @@
-FROM golang:1.14
+FROM alpine:latest
+RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
 
-WORKDIR /go/src/app
-COPY . .
+COPY main /
 
-RUN go get -d -v ./...
-RUN go install -v main.go
-
-CMD ["main"]
+CMD ["/main"]
