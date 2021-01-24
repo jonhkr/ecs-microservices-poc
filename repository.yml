@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'ECR Repository'
+
+Parameters:
+  ServiceName:
+    Type: String
+
+Resources:
+  ContainerRepository:
+    Type: 'AWS::ECR::Repository'
+    Properties:
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "string",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 5
+                },
+                "action": {
+                  "type": "expire"
+                }
+              }
+            ]
+          }
+      RepositoryName: !Ref ServiceName
+
+Outputs:
+  ContainerRepositoryURI:
+    Description: Container Repository URI
+    Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ContainerRepository}"
+    Export:
+      Name: !Sub "${AWS::StackName}:ContainerRepositoryURI"

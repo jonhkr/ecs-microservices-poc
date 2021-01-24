@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Microservices Service Dicovery'
+
+Parameters:
+  EnvironmentName:
+    Type: String
+  Domain:
+    Type: String
+
+Resources:
+  EcsSecurityGroupIngressFromSelf:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Ingress from other containers in the cluster
+      GroupId:
+        Fn::ImportValue: !Sub '${EnvironmentName}:ContainerSecurityGroup'
+      IpProtocol: -1
+      SourceSecurityGroupId:
+        Fn::ImportValue: !Sub '${EnvironmentName}:ContainerSecurityGroup'
+
+  ServiceDiscoveryNamespace:
+    Type: AWS::ServiceDiscovery::PrivateDnsNamespace
+    Properties:
+      Name: !Ref Domain
+      Vpc:
+        Fn::ImportValue: !Sub '${EnvironmentName}:VPC'
+
+Outputs:
+  PrivateServiceDiscoveryNamespace:
+    Description: The ID of the private service discovery namespace
+    Value: !Ref ServiceDiscoveryNamespace
+    Export:
+      Name: !Sub '${EnvironmentName}:PrivateServiceDiscoveryNamespace'

@@ -1,0 +1,43 @@
+{
+  "version": 2,
+  "extra_config": {},
+  "timeout": "3000ms",
+  "cache_ttl": "300s",
+  "output_encoding": "json",
+  "name": "api",
+  "port": 8080,
+  "endpoints": [
+    {
+      "endpoint": "/collect-messages",
+      "method": "GET",
+      "output_encoding": "json",
+      "extra_config": {},
+      "backend": [
+        {
+          "url_pattern": "/message",
+          "encoding": "json",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://app1.service.production"
+          ],
+          "group": "app1"
+        },
+        {
+          "url_pattern": "/message",
+          "encoding": "json",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "host": [
+            "http://app2.service.production"
+          ],
+          "disable_host_sanitize": true,
+          "group": "app2"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Service'
+
+Parameters:
+  EnvironmentName:
+    Type: String
+  ServiceName:
+    Type: String
+  ImageUrl:
+    Type: String
+  ServiceToCall:
+    Type: String
+
+  ContainerPort:
+    Type: Number
+    Default: 80
+  ContainerCpu:
+    Type: Number
+    Default: 256
+  ContainerMemory:
+    Type: Number
+    Default: 512
+  DesiredCount:
+    Type: Number
+    Default: 2
+
+Resources:
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '${EnvironmentName}/${ServiceName}'
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Ref 'ServiceName'
+      Cpu: !Ref 'ContainerCpu'
+      Memory: !Ref 'ContainerMemory'
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn:
+        Fn::ImportValue: !Sub '${EnvironmentName}:ECSTaskExecutionRole'
+      TaskRoleArn: !Ref "AWS::NoValue"
+      ContainerDefinitions:
+        - Name: !Ref 'ServiceName'
+          Cpu: !Ref 'ContainerCpu'
+          Memory: !Ref 'ContainerMemory'
+          Image: !Ref 'ImageUrl'
+          Environment:
+            - Name: "PORT"
+              Value: !Ref 'ContainerPort'
+            - Name: "SERVICE_TO_CALL"
+              Value: !Ref 'ServiceToCall'
+            - Name: "SERVICE_NAME"
+              Value: !Ref 'ServiceName'
+          PortMappings:
+            - ContainerPort: !Ref 'ContainerPort'
+          LogConfiguration:
+            LogDriver: 'awslogs'
+            Options:
+              awslogs-group: !Ref 'LogGroup'
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: !Ref 'ServiceName'
+
+  Service:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Ref 'ServiceName'
+      Cluster:
+        Fn::ImportValue: !Sub '${EnvironmentName}:ClusterName'
+      LaunchType: FARGATE
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 75
+      DesiredCount: !Ref 'DesiredCount'
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          SecurityGroups:
+            - Fn::ImportValue: !Sub '${EnvironmentName}:ContainerSecurityGroup'
+          Subnets:
+            - Fn::ImportValue: !Sub '${EnvironmentName}:PrivateSubnetA'
+            - Fn::ImportValue: !Sub '${EnvironmentName}:PrivateSubnetB'
+      TaskDefinition: !Ref 'TaskDefinition'
+      ServiceRegistries:
+        - RegistryArn: !GetAtt ServiceDiscoveryService.Arn
+
+   # Create a service discovery service in the private service namespace.
+  ServiceDiscoveryService:
+    Type: AWS::ServiceDiscovery::Service
+    Properties:
+      Name: !Ref ServiceName
+      DnsConfig:
+        DnsRecords: [{Type: A, TTL: "10"}]
+        NamespaceId:
+          Fn::ImportValue: !Sub '${EnvironmentName}:PrivateServiceDiscoveryNamespace'
+      HealthCheckCustomConfig:
+        FailureThreshold: 1
