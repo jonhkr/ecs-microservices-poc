@@ -50,7 +50,7 @@ Resources:
           Image: !Ref 'ImageUrl'
           Environment:
             - Name: "DD_ENV"
-              Value: "prod"
+              Value: !Ref 'EnvironmentName'
             - Name: "DD_SERVICE"
               Value: !Ref 'ServiceName'
             - Name: "PORT"
@@ -83,6 +83,10 @@ Resources:
               Value: true
             - Name: 'ECS_FARGATE'
               Value: true
+            - Name: "DD_ENV"
+              Value: !Ref 'EnvironmentName'
+            - Name: "DD_SERVICE"
+              Value: !Ref 'ServiceName'
           PortMappings:
             - ContainerPort: 8126
           LogConfiguration:
