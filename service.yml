@@ -24,6 +24,7 @@ Parameters:
     Type: Number
     Default: 2
 
+
 Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
@@ -44,11 +45,17 @@ Resources:
       TaskRoleArn: !Ref "AWS::NoValue"
       ContainerDefinitions:
         - Name: !Ref 'ServiceName'
-          Cpu: !Ref 'ContainerCpu'
-          Memory: !Ref 'ContainerMemory'
+          MemoryReservation: 256
+          Cpu: 246
           Image: !Ref 'ImageUrl'
           Environment:
+            - Name: "DD_ENV"
+              Value: "prod"
+            - Name: "DD_SERVICE"
+              Value: !Ref 'ServiceName'
             - Name: "PORT"
+              Value: !Ref 'ContainerPort'
+            - Name: "SERVER_PORT"
               Value: !Ref 'ContainerPort'
             - Name: "SERVICE_TO_CALL"
               Value: !Ref 'ServiceToCall'
@@ -62,6 +69,28 @@ Resources:
               awslogs-group: !Ref 'LogGroup'
               awslogs-region: !Ref 'AWS::Region'
               awslogs-stream-prefix: !Ref 'ServiceName'
+        - Name: 'datadog-agent'
+          MemoryReservation: 256
+          Cpu: 10
+          Image: 'datadog/agent:latest'
+          Essential: true
+          Environment:
+            - Name: 'DD_API_KEY'
+              Value: '6f0f43da02e02a3b86ed2a7982e9ed1b'
+            - Name: 'DD_APM_ENABLED'
+              Value: true
+            - Name: 'DD_APM_NON_LOCAL_TRAFFIC'
+              Value: true
+            - Name: 'ECS_FARGATE'
+              Value: true
+          PortMappings:
+            - ContainerPort: 8126
+          LogConfiguration:
+            LogDriver: 'awslogs'
+            Options:
+              awslogs-group: !Ref 'LogGroup'
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: 'datadog-agent'
 
   Service:
     Type: AWS::ECS::Service

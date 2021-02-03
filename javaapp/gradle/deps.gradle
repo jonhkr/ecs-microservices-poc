@@ -1,0 +1,10 @@
+ext {
+	libs = [:]
+}
+
+libs += [
+	springWebflux: 'org.springframework.boot:spring-boot-starter-webflux',
+	lombok: 'org.projectlombok:lombok',
+	springTest: 'org.springframework.boot:spring-boot-starter-test',
+	reactorTest: 'io.projectreactor:reactor-test',
+]

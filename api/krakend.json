@@ -36,6 +36,18 @@
           ],
           "disable_host_sanitize": true,
           "group": "app2"
+        },
+        {
+          "url_pattern": "/message",
+          "encoding": "json",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "host": [
+            "http://javaapp.service.production"
+          ],
+          "disable_host_sanitize": true,
+          "group": "javaapp"
         }
       ]
     }

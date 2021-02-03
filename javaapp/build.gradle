@@ -1,0 +1,51 @@
+plugins {
+	id 'java'
+	id 'jacoco'
+	id 'com.diffplug.spotless' version '5.3.0'
+	id 'org.springframework.boot' version '2.3.3.RELEASE'
+	id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+}
+
+apply from: "$rootDir/gradle/deps.gradle"
+
+repositories {
+	jcenter()
+}
+
+group 'com.example'
+version '1.0-SNAPSHOT'
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_11
+	targetCompatibility = JavaVersion.VERSION_11
+}
+
+dependencies {
+	implementation libs.springWebflux
+	compileOnly libs.lombok
+	annotationProcessor libs.lombok
+	testImplementation(libs.springTest) {
+		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+	}
+	testImplementation libs.reactorTest
+}
+
+test {
+	useJUnitPlatform()
+}
+
+spotless {
+	java {
+		importOrder()
+		removeUnusedImports()
+		googleJavaFormat()
+		trimTrailingWhitespace()
+		endWithNewline()
+	}
+	groovyGradle {
+		target '*.gradle', 'gradle/*.gradle'
+		trimTrailingWhitespace()
+		endWithNewline()
+		greclipse()
+	}
+}

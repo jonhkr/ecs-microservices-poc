@@ -85,7 +85,7 @@ push_image "app"
 
 deploy_app app1 "app2.${DISCOVERY_DOMAIN}" "${IMAGE}" &
 app1_pid=$!
-deploy_app app2 "app1.${DISCOVERY_DOMAIN}" "${IMAGE}" &
+deploy_app app2 "javaapp.${DISCOVERY_DOMAIN}" "${IMAGE}" &
 app2_pid=$!
 
 wait $app1_pid
@@ -94,6 +94,11 @@ echo "app1 deployment exited with status $?"
 wait $app2_pid
 echo "app2 deployment exited with status $?"
 
+push_image "javaapp"
+deploy_app javaapp "javaapp.${DISCOVERY_DOMAIN}" "${IMAGE}" &
+javaapp_pid=$!
+wait $javaapp_pid
+echo "javaapp deployment exited with status $?"
 
 # DEPLOY API
 

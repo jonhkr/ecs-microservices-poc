@@ -9,6 +9,7 @@ import (
 	"os"
 	"encoding/json"
     "math/rand"
+    "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 type Message struct {
@@ -17,11 +18,23 @@ type Message struct {
 }
 
 func main() {
+	tracer.Start()
+
+    // When the tracer is stopped, it will flush everything it has to the Datadog Agent before quitting.
+    // Make sure this line stays in your main function.
+    defer tracer.Stop()
+
 	serviceToCall := os.Getenv("SERVICE_TO_CALL")
 	serviceName := os.Getenv("SERVICE_NAME")
 	port := os.Getenv("PORT")
 
 	http.HandleFunc("/message", func(w http.ResponseWriter, r *http.Request) {
+		span := tracer.StartSpan("web.request", tracer.ResourceName("/message"))
+	    defer span.Finish()
+
+	    // Set tag
+	    span.SetTag("http.url", r.URL.Path)
+
 		m := Message{
 			From: serviceName,
 			Message: fmt.Sprintf("This is a random int: %d", rand.Intn(100)),
