@@ -1,4 +1,6 @@
 
+. env-config.sh
+
 set +x
 
 export AWS_REGION=us-east-1

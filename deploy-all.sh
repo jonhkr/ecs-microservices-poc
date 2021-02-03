@@ -75,6 +75,7 @@ deploy_app () {
 			ImageUrl="${IMAGE}" \
 			ServiceToCall="${SERVICE_TO_CALL}" \
 			ContainerPort="80" \
+			DatadogApiKey="${DATADOG_API_KEY}" \
 		--template-file service.yml \
 		--no-fail-on-empty-changeset
 }

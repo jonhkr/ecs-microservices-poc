@@ -24,6 +24,8 @@ Parameters:
     Type: Number
     Default: 2
 
+  DatadogApiKey:
+    Type: String
 
 Resources:
   LogGroup:
@@ -76,7 +78,7 @@ Resources:
           Essential: true
           Environment:
             - Name: 'DD_API_KEY'
-              Value: '6f0f43da02e02a3b86ed2a7982e9ed1b'
+              Value: !Ref 'DatadogApiKey'
             - Name: 'DD_APM_ENABLED'
               Value: true
             - Name: 'DD_APM_NON_LOCAL_TRAFFIC'
